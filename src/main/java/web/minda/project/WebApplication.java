@@ -1,0 +1,26 @@
+package web.minda.project;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+@SpringBootApplication
+@EnableJpaRepositories(basePackages = "web.minda.project.repository")
+@EnableScheduling   // enables scheduled tasks — like your cron jobs, auto-cleanups, etc.
+@EnableAsync   //enables Spring’s ability to execute methods annotated with @Async in a separate thread pool.
+public class WebApplication extends SpringBootServletInitializer {
+
+	public static void main(String[] args) {
+		SpringApplication.run(WebApplication.class, args);
+	}
+
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+		return builder.sources(WebApplication.class);
+
+	}
+}
