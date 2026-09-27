@@ -2,6 +2,7 @@ package web.minda.project.service;
 
 import java.time.LocalDateTime;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
@@ -11,190 +12,178 @@ import web.minda.project.repository.ActivationTokenRepository;
 @Service
 public class ActivationService {
 
-    private final ActivationTokenRepository tokenRepository;
-    private final EmailService emailService;
+	@Value("${app.login-url}")
+	private String loginUrl;
 
-    public ActivationService(
-            ActivationTokenRepository tokenRepository,
-            EmailService emailService) {
+	private final ActivationTokenRepository tokenRepository;
+	private final EmailService emailService;
 
-        this.tokenRepository = tokenRepository;
-        this.emailService = emailService;
-    }
+	public ActivationService(ActivationTokenRepository tokenRepository, EmailService emailService) {
 
-    public String activateAccount(String token) throws MessagingException {
+		this.tokenRepository = tokenRepository;
+		this.emailService = emailService;
+	}
 
-        ActivationToken activationToken =
-                tokenRepository.findByToken(token)
-                        .orElseThrow(() ->
-                                new RuntimeException("Invalid activation token"));
+	public String activateAccount(String token) throws MessagingException {
 
-        // Already activated
-        if (activationToken.isUsed()) {
-            return activationSuccessPage(
-                    "Account Already Activated",
-                    "Your account has already been activated. You can now log in."
-            );
-        }
+		ActivationToken activationToken = tokenRepository.findByToken(token)
+				.orElseThrow(() -> new RuntimeException("Invalid activation token"));
 
-        // Token expired
-        if (activationToken.getExpiresAt()
-                .isBefore(LocalDateTime.now())) {
+		// Already activated
+		if (activationToken.isUsed()) {
+			return activationSuccessPage("Account Already Activated",
+					"Your account has already been activated. You can now log in.");
+		}
 
-            return activationErrorPage(
-                    "Activation Link Expired",
-                    "This activation link has expired. Please request a new activation link."
-            );
-        }
+		// Token expired
+		if (activationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
 
-        // Mark token as used
-        activationToken.setUsed(true);
-        tokenRepository.save(activationToken);
+			return activationErrorPage("Activation Link Expired",
+					"This activation link has expired. Please request a new activation link.");
+		}
 
-        // Send activation success email
-        emailService.sendActivationSuccessEmail(
-                activationToken.getEmail()
-        );
+		// Mark token as used
+		activationToken.setUsed(true);
+		tokenRepository.save(activationToken);
 
-        // TODO:
-        // Publish user-activated event to Kafka
-        // User/Auth Service will set enabled=true
+		// Send activation success email
+		emailService.sendActivationSuccessEmail(activationToken.getEmail());
 
-        return activationSuccessPage(
-                "Account Activated Successfully",
-                "Your Job Portal account has been activated successfully. You can now log in."
-        );
-    }
+		// TODO:
+		// Publish user-activated event to Kafka
+		// User/Auth Service will set enabled=true
 
+		return activationSuccessPage("Account Activated Successfully",
+				"Your Job Portal account has been activated successfully. You can now log in.");
+	}
 
-    private String activationSuccessPage(String title, String message) {
+	private String activationSuccessPage(String title, String message) {
 
-        return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>%s</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            background: #f4f7fb;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            height: 100vh;
-                            margin: 0;
-                        }
+		return """
+				<!DOCTYPE html>
+				<html>
+				<head>
+				    <title>%s</title>
+				    <style>
+				        body {
+				            font-family: Arial, sans-serif;
+				            background: #f4f7fb;
+				            display: flex;
+				            justify-content: center;
+				            align-items: center;
+				            height: 100vh;
+				            margin: 0;
+				        }
 
-                        .card {
-                            background: white;
-                            padding: 40px;
-                            border-radius: 12px;
-                            text-align: center;
-                            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-                            max-width: 450px;
-                        }
+				        .card {
+				            background: white;
+				            padding: 40px;
+				            border-radius: 12px;
+				            text-align: center;
+				            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+				            max-width: 450px;
+				        }
 
-                        .icon {
-                            font-size: 60px;
-                            color: #28a745;
-                        }
+				        .icon {
+				            font-size: 60px;
+				            color: #28a745;
+				        }
 
-                        h1 {
-                            color: #222;
-                        }
+				        h1 {
+				            color: #222;
+				        }
 
-                        p {
-                            color: #666;
-                            font-size: 16px;
-                            line-height: 1.6;
-                        }
+				        p {
+				            color: #666;
+				            font-size: 16px;
+				            line-height: 1.6;
+				        }
 
-                        .login-btn {
-                            display: inline-block;
-                            margin-top: 20px;
-                            padding: 12px 25px;
-                            background: #007bff;
-                            color: white;
-                            text-decoration: none;
-                            border-radius: 6px;
-                        }
-                    </style>
-                </head>
+				        .login-btn {
+				            display: inline-block;
+				            margin-top: 20px;
+				            padding: 12px 25px;
+				            background: #007bff;
+				            color: white;
+				            text-decoration: none;
+				            border-radius: 6px;
+				        }
+				    </style>
+				</head>
 
-                <body>
+				<body>
 
-                    <div class="card">
+				    <div class="card">
 
-                        <div class="icon">✓</div>
+				        <div class="icon">✓</div>
 
-                        <h1>%s</h1>
+				        <h1>%s</h1>
 
-                        <p>%s</p>
+				        <p>%s</p>
 
-                        <a class="login-btn"
-                           href="https://localhost:8090/auth/loginpage">
-                           Go to Login
-                        </a>
+				        <a class="login-btn"
+				           href="%s">
+				            Go to Login
+				        </a>
 
-                    </div>
+				    </div>
 
-                </body>
-                </html>
-                """.formatted(title, title, message);
-    }
+				</body>
+				</html>
+				""".formatted(title, title, message, loginUrl);
+	}
 
+	private String activationErrorPage(String title, String message) {
 
-    private String activationErrorPage(String title, String message) {
+		return """
+				<!DOCTYPE html>
+				<html>
+				<head>
+				    <title>%s</title>
+				    <style>
+				        body {
+				            font-family: Arial, sans-serif;
+				            background: #f4f7fb;
+				            display: flex;
+				            justify-content: center;
+				            align-items: center;
+				            height: 100vh;
+				            margin: 0;
+				        }
 
-        return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>%s</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            background: #f4f7fb;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            height: 100vh;
-                            margin: 0;
-                        }
+				        .card {
+				            background: white;
+				            padding: 40px;
+				            border-radius: 12px;
+				            text-align: center;
+				            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+				            max-width: 450px;
+				        }
 
-                        .card {
-                            background: white;
-                            padding: 40px;
-                            border-radius: 12px;
-                            text-align: center;
-                            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-                            max-width: 450px;
-                        }
+				        h1 {
+				            color: #dc3545;
+				        }
 
-                        h1 {
-                            color: #dc3545;
-                        }
+				        p {
+				            color: #666;
+				            font-size: 16px;
+				            line-height: 1.6;
+				        }
+				    </style>
+				</head>
 
-                        p {
-                            color: #666;
-                            font-size: 16px;
-                            line-height: 1.6;
-                        }
-                    </style>
-                </head>
+				<body>
 
-                <body>
+				    <div class="card">
 
-                    <div class="card">
+				        <h1>%s</h1>
 
-                        <h1>%s</h1>
+				        <p>%s</p>
 
-                        <p>%s</p>
+				    </div>
 
-                    </div>
-
-                </body>
-                </html>
-                """.formatted(title, title, message);
-    }
+				</body>
+				</html>
+				""".formatted(title, title, message);
+	}
 }
