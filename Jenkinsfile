@@ -32,10 +32,9 @@ pipeline {
                     --name user-activation-service \
                     --network backend_default \
                     --restart unless-stopped \
-                    -p 8093:8443 \
+                    -p 8094:8443 \
                     -e LOGIN_URL=https://192.168.31.184:8090/auth/loginpage \
                     -e KAFKA_BOOTSTRAP_SERVERS="kafka:9092" \
-                    -e MAIL_PASSWORD="$MAIL_PASSWORD" \
                     user-activation-service
                 '''
             }
