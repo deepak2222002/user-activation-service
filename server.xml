@@ -56,10 +56,10 @@
             <SSLHostConfig>
 
                 <Certificate
-                        certificateKeystoreFile="conf/notification-service.p12"
+                        certificateKeystoreFile="conf/user-activation-service.p12"
                         certificateKeystorePassword="remote"
                         certificateKeystoreType="PKCS12"
-                        certificateKeyAlias="notification-service"
+                        certificateKeyAlias="user-activation-service"
                         type="RSA" />
 
             </SSLHostConfig>
