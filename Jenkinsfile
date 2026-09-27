@@ -18,25 +18,25 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t notification-service .'
+                sh 'docker build -t user-activation-service .'
             }
         }
 
         stage('Deploy') {
             steps {
                 sh '''
-                    docker stop notification-service || true
-                    docker rm notification-service || true
+                    docker stop user-activation-service || true
+                    docker rm user-activation-service || true
 
                     docker run -d \
-                    --name notification-service \
+                    --name user-activation-service \
                     --network backend_default \
                     --restart unless-stopped \
                     -p 8093:8443 \
                     -e LOGIN_URL=https://192.168.31.184:8090/auth/loginpage \
                     -e KAFKA_BOOTSTRAP_SERVERS="kafka:9092" \
                     -e MAIL_PASSWORD="$MAIL_PASSWORD" \
-                    notification-service
+                    user-activation-service
                 '''
             }
         }

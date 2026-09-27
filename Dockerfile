@@ -8,7 +8,7 @@ COPY target/*.war webapps/ROOT.war
 
 COPY server.xml conf/server.xml
 
-COPY src/main/resources/notification-service.p12 conf/notification-service.p12
+COPY src/main/resources/user-activation-service.p12 conf/user-activation-service.p12
 
 EXPOSE 8080
 EXPOSE 8443
