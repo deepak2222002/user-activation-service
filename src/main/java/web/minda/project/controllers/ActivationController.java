@@ -13,18 +13,19 @@ import web.minda.project.service.ActivationService;
 @RequestMapping("/activate")
 public class ActivationController {
 
-    private final ActivationService activationService;
+	private final ActivationService activationService;
 
-    public ActivationController(ActivationService activationService) {
-        this.activationService = activationService;
-    }
+	public ActivationController(ActivationService activationService) {
+		this.activationService = activationService;
+	}
 
-    @GetMapping("/activateAccount")
-    public ResponseEntity<String> activateAccount(
-            @RequestParam("token") String token) throws MessagingException {
+	@GetMapping("/activateAccount")
+	public ResponseEntity<String> activateAccount(@RequestParam("token") String token) throws MessagingException {
 
-        String result = activationService.activateAccount(token);
+			String result = activationService.activateAccount(token);
 
-        return ResponseEntity.ok(result);
-    }
+			return ResponseEntity.ok(result);
+
+
+	}
 }

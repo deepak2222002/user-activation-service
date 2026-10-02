@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
 import web.minda.project.entity.ActivationToken;
+import web.minda.project.entity.LoginMaster;
 import web.minda.project.repository.ActivationTokenRepository;
+import web.minda.project.repository.LoginMasterRepository;
 
 @Service
 public class ActivationService {
@@ -16,11 +18,13 @@ public class ActivationService {
 	private String loginUrl;
 
 	private final ActivationTokenRepository tokenRepository;
+	private final LoginMasterRepository loginMasterRepository;
 	private final EmailService emailService;
 
-	public ActivationService(ActivationTokenRepository tokenRepository, EmailService emailService) {
+	public ActivationService(ActivationTokenRepository tokenRepository, EmailService emailService, LoginMasterRepository loginMasterRepository) {
 
 		this.tokenRepository = tokenRepository;
+		this.loginMasterRepository = loginMasterRepository;
 		this.emailService = emailService;
 	}
 
@@ -41,13 +45,16 @@ public class ActivationService {
 			return activationErrorPage("Activation Link Expired",
 					"This activation link has expired. Please request a new activation link.");
 		}
-
+		
 		// Mark token as used
 		activationToken.setUsed(true);
 		tokenRepository.save(activationToken);
+		
 
 		// Send activation success email
 		emailService.sendActivationSuccessEmail(activationToken.getEmail());
+		
+		enableUser(activationToken.getEmail());
 
 		// TODO:
 		// Publish user-activated event to Kafka
@@ -56,7 +63,16 @@ public class ActivationService {
 		return activationSuccessPage("Account Activated Successfully",
 				"Your Job Portal account has been activated successfully. You can now log in.");
 	}
+	
+	public void enableUser(String email) {
 
+	    LoginMaster user = loginMasterRepository.findByEmail(email)
+	            .orElseThrow(() -> new RuntimeException("User not found"));
+
+	    user.setIsEnabled(true);
+
+	    loginMasterRepository.save(user);
+	}
 	private String activationSuccessPage(String title, String message) {
 
 		return """
